@@ -70,7 +70,7 @@ class App:
 
     def __init__(self):
         # init(width, height, [caption], [fps])
-        pyxel.init(self.window_size_x,self.window_size_y,caption="Anicca",scale=4, fps=25)
+        pyxel.init(self.window_size_x,self.window_size_y,caption="Anicca", fps=25)
         # pyxel.init(self.window_size_x,self.window_size_y,caption="Anicca", scale=2, fps=25)
 
         pyxel.load('samsara.pyxres')
