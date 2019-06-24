@@ -8,19 +8,26 @@ MAP_SIZE_X = 64
 MAP_SIZE_Y = 64
 is_rect = 0
 
-MODE_OPENING = 10
-MODE_MAP = 20
-MODE_TALK = 30
+IS_MODE_TERMINATE = 0
+MODE_OPENING = 1000
+MODE_PROLOGUE = 1500
+MODE_MAP = 2000
+MODE_TALK = 3000
+MODE_EPILOGUE = 4000
+MODE_ENDING = 5000
 MODE = MODE_OPENING
 # MODE = MODE_MAP
 
+# ===== move parameters =====
 TILE_X = 64
 TILE_Y = 64
-
 MAP_BASE_X = 0
 MAP_BASE_Y = 0
 
 MUSIC = 5
+TEMP_FRAMES = 0
+
+
 
 class Font:
     def __init__(self, file, size, alphabet):
@@ -157,7 +164,7 @@ class Anatta:
                 self.count_move_x1 = 0
                 self.tile_x += self.tile_move_x# 入れかえ完了後不要
                 TILE_X += self.tile_move_x
-                print("TILE_X:"+str(TILE_X))
+                # print("TILE_X:"+str(TILE_X))
             else:
                 self.count_move_x1 += 1
                 self.base_x += self.move_x
@@ -170,7 +177,7 @@ class Anatta:
                 self.tile_y += self.tile_move_y# 入れかえ完了後不要
                 # print(self.tile_x)
                 TILE_Y += self.tile_move_y
-                print("TILE_Y:"+str(TILE_Y))
+                # print("TILE_Y:"+str(TILE_Y))
             else:
                 self.count_move_y += 1
                 self.base_y += self.move_y
@@ -245,7 +252,7 @@ class Map:
                 self.quantity_move_x = 0
                 self.count_move_x = 0
                 TILE_X += self.tile_move_x
-                print("TILE_X:"+str(TILE_X))
+                # print("TILE_X:"+str(TILE_X))
             else:
                 self.count_move_x += 1
                 self.base_x += self.quantity_move_x# 入れかえ完了後不要
@@ -258,7 +265,7 @@ class Map:
                 self.quantity_move_y = 0
                 self.count_move_y = 0
                 TILE_Y += self.tile_move_y
-                print("TILE_Y:"+str(TILE_Y))
+                # print("TILE_Y:"+str(TILE_Y))
             else:
                 self.count_move_y += 1
                 self.base_y += self.quantity_move_y# 入れかえ完了後不要
@@ -271,13 +278,14 @@ class Opening_scene:
         self.Text = Text()
 
     def display(self):
-        global MUSIC
+        global MUSIC, IS_MODE_TERMINATE, TEMP_FRAMES
         # -- Opening credit.
         if pyxel.frame_count < 51:
-            self.Text.display(self.Text.font, 50, 128, "Created by Naoki.")
+            self.Text.display(self.Text.font, 30, 128, "Created by\nNaoki\nin 2019.")
             if MUSIC != 0:
                 MUSIC = 0
-                pyxel.playm(MUSIC, loop=False)
+                pyxel.play(0,5, loop=False)
+                pyxel.play(1,7, loop=False)
         if pyxel.frame_count > 17:
             pyxel.pal(7,6)
         if pyxel.frame_count > 34:
@@ -286,32 +294,58 @@ class Opening_scene:
             pyxel.pal()
 
         # -- Opening scene.
-        if pyxel.frame_count >= 68 and App.temp_frames == 0:
-            # asd = "ert"
-            # self.App.text(App.font, 100, 128, asd)
-            # pass
+        if pyxel.frame_count >= 68 and TEMP_FRAMES == 0:
             self.Text.display(self.Text.font, 100, 128, "はじめから\nつづきから".strip())
             
             if MUSIC != 1:
                 MUSIC = 1
                 pyxel.playm(MUSIC, loop=True)
+            
+            if pyxel.btn(pyxel.KEY_SPACE):
+                IS_MODE_TERMINATE =1
 
-    def close(self):
-        global MODE
-        if MODE == MODE_OPENING and pyxel.btn(pyxel.KEY_SPACE):
-            App.temp_frames = pyxel.frame_count
+
+class Prologue:
+
+    def __init__(self):
+        self.Text = Text()
+    
+    def display(self):
+        global MUSIC, IS_MODE_TERMINATE
+        if MUSIC != 2:
             pyxel.stop()
-        if App.temp_frames != 0 and pyxel.frame_count == App.temp_frames + App.delay_frames:
-            MODE = MODE_MAP
-            App.temp_frames = 0
-    # def nue(self):
-    #     print(App.temp_frames)
+            MUSIC = 2
+            pyxel.playm(MUSIC, loop=True)
+
+        pyxel.cls(5)
+        if pyxel.btn(pyxel.KEY_SPACE):
+                IS_MODE_TERMINATE =1
+
+class Epilogue:
+
+    def __init__(self):
+        self.Text = Text()
+    
+    def display(self):
+        global MUSIC, IS_MODE_TERMINATE
+
+        if MUSIC != 0:
+            pyxel.stop()
+            MUSIC = 0
+            # pyxel.playm(MUSIC, loop=True)
+            pyxel.play(0,6, loop=True)
+            pyxel.play(1,8, loop=True)
+
+        pyxel.cls(10)
+        if pyxel.btn(pyxel.KEY_SPACE):
+                IS_MODE_TERMINATE =1
 
 class Utilities:
-    global TILE_X
     cant_go = ( 5, 7, 96, 128, 130, 132 )
+    dead_tile = 130
 
     def collision_detection(self,tile_x,tile_y,direction):
+        global IS_MODE_TERMINATE
         if direction == "r":
             add_num = (2,0)
         elif direction == "d":
@@ -320,8 +354,12 @@ class Utilities:
             add_num = (-2,0)
         elif direction == "u":
             add_num = (0,-2)
+
+        if pyxel.tilemap(0).get(tile_x/8 + add_num[0], tile_y/8 + add_num[1]) == self.dead_tile:
+            IS_MODE_TERMINATE = 1
+
         # -- To debug.
-        # print(pyxel.tilemap(0).get(tile_x/8 + add_num[0], tile_y/8 + add_num[1]))# show img pallet code.
+        print(pyxel.tilemap(0).get(tile_x/8 + add_num[0], tile_y/8 + add_num[1]))# show img pallet code.
 
         if pyxel.tilemap(0).get(tile_x/8 + add_num[0], tile_y/8 + add_num[1]) not in self.cant_go and\
         pyxel.tilemap(0).get(tile_x/8+ add_num[0] +1, tile_y/8 + add_num[1]) not in self.cant_go and\
@@ -329,13 +367,19 @@ class Utilities:
         pyxel.tilemap(0).get(tile_x/8+ add_num[0] +1, tile_y/8 + add_num[1] +1) not in self.cant_go:
             return True
         else:
-            print("CantGo")
+            # print("CantGo")
             return False
+        
+    def change_mode(self, next_mode, delay_frames=10):
+        global MODE, IS_MODE_TERMINATE, TEMP_FRAMES
+        if IS_MODE_TERMINATE == 1:#pyxel.btn(pyxel.KEY_SPACE):
+            IS_MODE_TERMINATE = 0
+            TEMP_FRAMES = pyxel.frame_count
+            pyxel.stop()
+        if TEMP_FRAMES != 0 and pyxel.frame_count == TEMP_FRAMES + delay_frames:
+            MODE = next_mode
 
 class App:
-
-    temp_frames = 0
-    delay_frames = 10
 
     def __init__(self):
         # init(width, height, [caption], [fps])
@@ -344,6 +388,9 @@ class App:
         pyxel.load('samsara.pyxres')
         self.Map = Map()
         self.Opening_scene = Opening_scene()
+        self.Prologue = Prologue()
+        self.Epilogue = Epilogue()
+        self.Utilities = Utilities()
         self.Text = Text()
         self.Anatta = Anatta()
 
@@ -356,21 +403,30 @@ class App:
             pyxel.quit()
 
         if MODE == MODE_OPENING:
-            self.Opening_scene.close()
+            self.Utilities.change_mode(MODE_PROLOGUE)
+        elif MODE == MODE_PROLOGUE:
+            self.Utilities.change_mode(MODE_MAP)
         elif MODE == MODE_MAP:
             self.Map.move()
             self.Anatta.move()
+            self.Utilities.change_mode(MODE_EPILOGUE)
+        elif MODE == MODE_EPILOGUE:
+            self.Utilities.change_mode(MODE_PROLOGUE)
         
     # ゲーム内で描画されるドット絵の処理をする
     def draw(self):
         pyxel.cls(0)
         if MODE == MODE_OPENING:
             self.Opening_scene.display()
-        if MODE == MODE_MAP:
+        elif MODE == MODE_PROLOGUE:
+            self.Prologue.display()
+        elif MODE == MODE_MAP:
             self.Map.display()
             self.Anatta.display()
             self.draw_Satta()
             self.Text.display_rect()
+        elif MODE == MODE_EPILOGUE:
+            self.Epilogue.display()
     
     def draw_Satta(self):
         if pyxel.frame_count % 25 > 12:
