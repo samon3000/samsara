@@ -1,6 +1,7 @@
 import pyxel
 from PIL import Image, ImageFont, ImageDraw
 import string
+import random
 
 WINDOW_SIZE_X = 256
 WINDOW_SIZE_Y = 256
@@ -15,8 +16,16 @@ MODE_MAP = 2000
 MODE_TALK = 3000
 MODE_EPILOGUE = 4000
 MODE_ENDING = 5000
-MODE = MODE_OPENING
-# MODE = MODE_MAP
+# MODE = MODE_OPENING
+MODE =  MODE_PROLOGUE # ----- Temp value for development.
+
+DEVA_REALM = 1
+MANUSSA_REALM = 2
+TIRAACCHANA_REALM = 3
+PETA_REALM = 4
+NIRAYA_REALM = 5
+
+CURRENT_REALM = MANUSSA_REALM
 
 # ===== move parameters =====
 TILE_X = 64
@@ -90,21 +99,22 @@ class Text:
         if is_rect == 1 and pyxel.btnr(pyxel.KEY_SPACE):
             is_rect = 0
         elif is_rect == 0 and pyxel.btnr(pyxel.KEY_SPACE):
+            pyxel.play(2,9, loop=False)
             is_rect = 1
         if is_rect == 1:
             pyxel.rect(1,1,254,48,0)
             self.display(self.font, 4, 0, "Samsara\nくりかえす せかい\nやあ　おでかけですか?")
 
 class Anatta:
-    # -- インスタンス変数で使うメリデメの理解がないので使用保留します。
+    # ----- インスタンス変数で使うメリデメの理解がないので使用保留します。
     # def __init__(self):
     #     self.dot_x = 64
     #     self.base_y = 64
 
-    # -- Display coodinates in a window. (DCW)
+    # ----- Display coodinates in a window. (DCW)
     base_x = 64
     base_y = 64
-    # -- Display coodinates in a map. (DCM)
+    # ----- Display coodinates in a map. (DCM)
     tile_x_org = 64
     tile_y_org = 64
     tile_x = tile_x_org
@@ -157,7 +167,7 @@ class Anatta:
                         self.move_y = -4
                         self.tile_move_y = -16
 
-        # -- The map stops when it moved 16px by btn. x-axis.
+        # ----- The map stops when it moved 16px by btn. x-axis.
         if self.move_x != 0:
             if self.count_move_x1 >= 4:
                 self.move_x = 0
@@ -169,7 +179,7 @@ class Anatta:
                 self.count_move_x1 += 1
                 self.base_x += self.move_x
 
-        # -- The map stops when it moved 16px by btn. y-axis.
+        # ----- The map stops when it moved 16px by btn. y-axis.
         if self.move_y != 0:
             if self.count_move_y >= 4:
                 self.move_y = 0
@@ -207,16 +217,27 @@ class Map:
             pyxel.stop()
             MUSIC = 3
             pyxel.playm(MUSIC, loop=True)
-        tm = 0
-        u = 0
-        v = 0
-        w = MAP_SIZE_X
-        h = MAP_SIZE_Y
+        
+        if (CURRENT_REALM == DEVA_REALM):
+            tm, u, v, w, h = 0, 0, 0, MAP_SIZE_X, MAP_SIZE_Y
+            pyxel.pal(11,7)
+        elif (CURRENT_REALM == MANUSSA_REALM):
+            tm, u, v, w, h = 0, 0, 0, MAP_SIZE_X, MAP_SIZE_Y
+            pyxel.pal()
+        elif (CURRENT_REALM == TIRAACCHANA_REALM):
+            tm, u, v, w, h = 0, 0, 0, MAP_SIZE_X, MAP_SIZE_Y
+            pyxel.pal(11,10)
+        elif (CURRENT_REALM == PETA_REALM):
+            tm, u, v, w, h = 0, 0, 0, MAP_SIZE_X, MAP_SIZE_Y
+            pyxel.pal(11,8)
+        elif (CURRENT_REALM == NIRAYA_REALM):
+            tm, u, v, w, h = 0, 0, 0, MAP_SIZE_X, MAP_SIZE_Y
+            pyxel.pal(11,5)
         # 指定したtm(template)番号の(u,v)座標から
         # サイズ(w,h)の大きさを(base_x,base_y)座標に描画する
         pyxel.bltm(self.base_x,self.base_y,tm,u,v,w,h)
 
-    # -- Map's movement below a window.
+    # ----- Map's movement below a window.
     def move(self):
         global TILE_X, TILE_Y, MAP_BASE_X, MAP_BASE_Y
         if self.quantity_move_x == 0 and self.quantity_move_y == 0 and is_rect == 0:
@@ -224,9 +245,9 @@ class Map:
                 if pyxel.btn(pyxel.KEY_D) or pyxel.btn(pyxel.KEY_RIGHT):
                     if self.Utilities.collision_detection(TILE_X, TILE_Y, "r"):
                     # if pyxel.tilemap(0).get(Anatta.tile_x/8+2,Anatta.tile_y/8) not in self.cant_go:
-                        # -- Map move opposite to the btn.
+                        # ----- Map move opposite to the btn.
                         self.quantity_move_x = -4
-                        # -- DCM move same direction.
+                        # ----- DCM move same direction.
                         self.tile_move_x = 16
             if TILE_X > 64 and TILE_X <= 256+64:
             # if (MAP_BASE_X < 0 and TILE_X > 64) or (MAP_BASE_X >= -(WINDOW_SIZE_X) and TILE_X < 256+64):
@@ -246,7 +267,7 @@ class Map:
                     if self.Utilities.collision_detection(TILE_X, TILE_Y, "u"):
                         self.quantity_move_y = 4
                         self.tile_move_y = -16
-        # -- The map stops when it moved 16px by btn. x-axis.
+        # ----- The map stops when it moved 16px by btn. x-axis.
         if self.quantity_move_x != 0:
             if self.count_move_x >= 4:
                 self.quantity_move_x = 0
@@ -259,7 +280,7 @@ class Map:
                 MAP_BASE_X += self.quantity_move_x
                 Satta.tile_x += self.quantity_move_x
 
-        # -- Same as above. y-axis.
+        # ----- Same as above. y-axis.
         if self.quantity_move_y != 0:
             if self.count_move_y >= 4:
                 self.quantity_move_y = 0
@@ -279,7 +300,7 @@ class Opening_scene:
 
     def display(self):
         global MUSIC, IS_MODE_TERMINATE, TEMP_FRAMES
-        # -- Opening credit.
+        # ----- Opening credit.
         if pyxel.frame_count < 51:
             self.Text.display(self.Text.font, 30, 128, "Created by\nNaoki\nin 2019.")
             if MUSIC != 0:
@@ -293,7 +314,7 @@ class Opening_scene:
         if pyxel.frame_count > 52:
             pyxel.pal()
 
-        # -- Opening scene.
+        # ----- Opening scene.
         if pyxel.frame_count >= 68 and TEMP_FRAMES == 0:
             self.Text.display(self.Text.font, 100, 128, "はじめから\nつづきから".strip())
             
@@ -338,7 +359,7 @@ class Epilogue:
 
         pyxel.cls(10)
         if pyxel.btn(pyxel.KEY_SPACE):
-                IS_MODE_TERMINATE =1
+            IS_MODE_TERMINATE =1
 
 class Utilities:
     cant_go = ( 5, 7, 96, 128, 130, 132 )
@@ -346,38 +367,50 @@ class Utilities:
 
     def collision_detection(self,tile_x,tile_y,direction):
         global IS_MODE_TERMINATE
-        if direction == "r":
-            add_num = (2,0)
-        elif direction == "d":
-            add_num = (0,2)
-        if direction == "l":
-            add_num = (-2,0)
-        elif direction == "u":
-            add_num = (0,-2)
+        if IS_MODE_TERMINATE == 0:
+            if direction == "r":
+                add_num = (2,0)
+            elif direction == "d":
+                add_num = (0,2)
+            if direction == "l":
+                add_num = (-2,0)
+            elif direction == "u":
+                add_num = (0,-2)
 
-        if pyxel.tilemap(0).get(tile_x/8 + add_num[0], tile_y/8 + add_num[1]) == self.dead_tile:
-            IS_MODE_TERMINATE = 1
+            if pyxel.tilemap(0).get(tile_x/8 + add_num[0], tile_y/8 + add_num[1]) == self.dead_tile:
+                IS_MODE_TERMINATE = 1
 
-        # -- To debug.
-        print(pyxel.tilemap(0).get(tile_x/8 + add_num[0], tile_y/8 + add_num[1]))# show img pallet code.
+            # ----- To debug.
+            # print(pyxel.tilemap(0).get(tile_x/8 + add_num[0], tile_y/8 + add_num[1]))# show img pallet code.
 
-        if pyxel.tilemap(0).get(tile_x/8 + add_num[0], tile_y/8 + add_num[1]) not in self.cant_go and\
-        pyxel.tilemap(0).get(tile_x/8+ add_num[0] +1, tile_y/8 + add_num[1]) not in self.cant_go and\
-        pyxel.tilemap(0).get(tile_x/8+ add_num[0], tile_y/8 + add_num[1] +1) not in self.cant_go and\
-        pyxel.tilemap(0).get(tile_x/8+ add_num[0] +1, tile_y/8 + add_num[1] +1) not in self.cant_go:
-            return True
-        else:
-            # print("CantGo")
-            return False
+            if pyxel.tilemap(0).get(tile_x/8 + add_num[0], tile_y/8 + add_num[1]) not in self.cant_go and\
+            pyxel.tilemap(0).get(tile_x/8+ add_num[0] +1, tile_y/8 + add_num[1]) not in self.cant_go and\
+            pyxel.tilemap(0).get(tile_x/8+ add_num[0], tile_y/8 + add_num[1] +1) not in self.cant_go and\
+            pyxel.tilemap(0).get(tile_x/8+ add_num[0] +1, tile_y/8 + add_num[1] +1) not in self.cant_go:
+                return True
+            else:
+                # print("CantGo")
+
+                pyxel.play(2,10, loop=False)
+                return False
         
     def change_mode(self, next_mode, delay_frames=10):
-        global MODE, IS_MODE_TERMINATE, TEMP_FRAMES
-        if IS_MODE_TERMINATE == 1:#pyxel.btn(pyxel.KEY_SPACE):
+        global MODE, IS_MODE_TERMINATE, TEMP_FRAMES, CURRENT_REALM
+        # ----- Check IS_MODE_TERMINATE value.
+        if IS_MODE_TERMINATE == 1:
             IS_MODE_TERMINATE = 0
             TEMP_FRAMES = pyxel.frame_count
             pyxel.stop()
+            # print("n:"+ str(next_mode))
+            # print("df:"+str(delay_frames))
+            if MODE == MODE_MAP:# ----- Temp gimmick for development.
+                CURRENT_REALM = random.randint(1,5)
+                # print(CURRENT_REALM)
+        # ----- Earn delay_frames time.
         if TEMP_FRAMES != 0 and pyxel.frame_count == TEMP_FRAMES + delay_frames:
+            TEMP_FRAMES = 0
             MODE = next_mode
+        # print("IS_T:"+str(IS_MODE_TERMINATE))
 
 class App:
 
@@ -409,9 +442,9 @@ class App:
         elif MODE == MODE_MAP:
             self.Map.move()
             self.Anatta.move()
-            self.Utilities.change_mode(MODE_EPILOGUE)
+            self.Utilities.change_mode(MODE_EPILOGUE,0)
         elif MODE == MODE_EPILOGUE:
-            self.Utilities.change_mode(MODE_PROLOGUE)
+            self.Utilities.change_mode(MODE_PROLOGUE,10)
         
     # ゲーム内で描画されるドット絵の処理をする
     def draw(self):
